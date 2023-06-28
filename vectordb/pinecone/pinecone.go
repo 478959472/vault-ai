@@ -2,7 +2,9 @@ package pinecone
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -34,6 +36,11 @@ func New(endpoint string, apiKey string) (*Pinecone, error) {
 	}, nil
 }
 
+func HashFileName(filename string) string {
+	hash := sha256.Sum256([]byte(filename))
+	return hex.EncodeToString(hash[:])
+}
+
 func (p *Pinecone) UpsertEmbeddings(embeddings [][]float32, chunks []chunk.Chunk, uuid string) error {
 	// Prepare URL
 	url := p.Endpoint + "/vectors/upsert"
@@ -41,9 +48,10 @@ func (p *Pinecone) UpsertEmbeddings(embeddings [][]float32, chunks []chunk.Chunk
 	// Prepare the vectors
 	vectors := make([]PineconeVector, len(embeddings))
 	for i, embedding := range embeddings {
+		vectorID := fmt.Sprintf("id-%s-%d", HashFileName(chunks[i].Title), i)
 		chunk := chunks[i]
 		vectors[i] = PineconeVector{
-			ID:     fmt.Sprintf("id-%d", i),
+			ID:     vectorID,
 			Values: embedding,
 			Metadata: map[string]string{
 				"file_name": chunk.Title,

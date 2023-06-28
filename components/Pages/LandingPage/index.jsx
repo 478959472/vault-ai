@@ -39,7 +39,7 @@ const ContextSnippet = ({ context, index }) => {
 
 const ResponseDisplay = ({ response }) => {
     if (!response) return null;
-    
+
     const renderedMarkdown = marked(response.answer);
 
     return (
@@ -69,7 +69,7 @@ const LandingPage = (props: Props): React.Node => {
     const [response, setResponse] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    React.useEffect(() => {}, []);
+    React.useEffect(() => { }, []);
 
     const handleAskQuestion = () => {
         // Perform question submission here
@@ -94,19 +94,19 @@ const LandingPage = (props: Props): React.Node => {
             });
     };
 
-	React.useEffect(() => {
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter' && e.ctrlKey && !loading && question) {
-            handleAskQuestion();
-        }
-    };
+    React.useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Enter' && e.ctrlKey && !loading && question) {
+                handleAskQuestion();
+            }
+        };
 
-    document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keydown', handleKeyDown);
 
-    return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-    };
-}, [loading, question]);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [loading, question]);
 
     const handleFileUpload = (files) => {
         setUploadedFiles([]);
@@ -141,6 +141,8 @@ const LandingPage = (props: Props): React.Node => {
     });
 
     const failedFilenames = Object.keys(failedFiles);
+    let params = (new URL(document.location)).searchParams;
+    let userType = params.get('userType'); // "admin"
 
     return (
         <Page
@@ -149,23 +151,39 @@ const LandingPage = (props: Props): React.Node => {
             contentPreferredWidth={1300}
             contentClass={s.pageContent}>
             <div className={s.text}>
-                <h1>The "OP" Golang Question-Answering Stack</h1>
+                <h1 style={{fontWeight: 'bold'}}>5g消息AI客服</h1>
                 {errorMessage && <div className={s.error}>{errorMessage}</div>}
                 <div className={s.workArea}>
                     <div className={s.leftColumn}>
-                        <div
-                            {...getRootProps()}
-                            className={[
-                                s.dropzone,
-                                loading ? s.dropzoneLoading : '',
-                            ].join(' ')}>
-                            <input {...getInputProps()} disabled={loading} />
-                            <p>
-                                {loading
-                                    ? 'Loading...'
-                                    : 'Drag and drop files to add to the knowledgebase here, or click to select files'}
-                            </p>
-                        </div>
+                        {userType === 'admin' && (
+                            <div
+                                {...getRootProps()}
+                                className={[
+                                    s.dropzone,
+                                    loading ? s.dropzoneLoading : '',
+                                ].join(' ')}>
+                                <input {...getInputProps()} disabled={loading} />
+                                <p>
+                                    {loading
+                                        ? 'Loading...'
+                                        : '拖放文件添加到知识库这里，或点击选择文件'}
+                                </p>
+                            </div>
+                        )}
+                         {userType != 'admin' && (<div className={s.questions}>
+                            <span>个人gpt账户demo，请节省使用！&#x1F91D;</span>
+                            <ul className={s.twoColumnList}>
+                              <li>AIM支持手机品牌有哪些？</li>
+                              <li>AIM运营商拦截如何解决？</li>
+                              <li>AIM模板制作规范有哪些？</li>
+                              <li>如何通过H5跳转小程序？</li>
+                              <li>富信基本格式规范有哪些？</li>
+                              <li>讲讲公司年假制度？</li>
+                              <li>AIM非5G消息用户如何接收消息？</li>
+                            </ul>
+                          </div>
+                          )}
+
                         <div className={s.questionInput}>
                             <textarea
                                 value={question}
@@ -173,7 +191,7 @@ const LandingPage = (props: Props): React.Node => {
                                 placeholder="Enter your question here..."
                                 className={s.textarea}
                             />
-                            <button
+                            <button style={{width: 60}}
                                 onClick={handleAskQuestion}
                                 disabled={loading || !question}
                                 className={
@@ -181,7 +199,7 @@ const LandingPage = (props: Props): React.Node => {
                                         ? s.askQuestionDisabled
                                         : s.askQuestion
                                 }>
-                                Submit
+                                提交
                             </button>
                             {loading && <div className={s.loader} />}
                         </div>

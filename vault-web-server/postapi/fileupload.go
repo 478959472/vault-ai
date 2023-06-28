@@ -40,7 +40,8 @@ func (ctx *HandlerContext) UploadHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	files := r.MultipartForm.File["files"]
-	uuid := r.FormValue("uuid") // Get the UUID from the form data
+	// uuid := r.FormValue("uuid") // Get the UUID from the form data
+	uuid := "8078d199-aac0-452d-8487-698fc10d3c84"
 	userProvidedOpenApiKey := r.FormValue("apikey")
 
 	log.Println("[UploadHandler] UUID=", uuid)

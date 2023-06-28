@@ -62,7 +62,7 @@ const Header = (): React.Node => {
                 to={thisSite}
                 data-action={'home'}
                 data-category={'Giftcard-header'}>
-                <div className={s.giftLogo}>The Vault</div>
+                <div className={s.giftLogo}>小梦AI</div>
             </Go>
         </div>
     );
