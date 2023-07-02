@@ -37,7 +37,7 @@ var (
 	debugSite = flag.Bool(
 		"debug", false, "debug site")
 	port = flag.String(
-		"port", "8101", "server port")
+		"port", "8100", "server port")
 	siteConfig = map[string]string{
 		"DEBUG_SITE": "false",
 	}
