@@ -182,7 +182,7 @@ func min(a, b int) int {
 func buildPrompt(contexts []string, question string) (string, error) {
 	tokenLimit := 3750
 	promptStart := "Answer the question based on the context below.\n\nContext:\n"
-	promptEnd := fmt.Sprintf("\n\nQuestion: %s\nAnswer:", question)
+	promptEnd := fmt.Sprintf("\n\n问题: %s\n使用中文回答:", question)
 
 	// Get tiktoken encoding for the model
 	tke, err := tiktoken.EncodingForModel("davinci")

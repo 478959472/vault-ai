@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/pashpashpash/vault/form"
 	openai "github.com/sashabaranov/go-openai"
@@ -28,7 +29,6 @@ func (ctx *HandlerContext) QuestionHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	form.UUID = "8078d199-aac0-452d-8487-698fc10d3c84"
-
 	log.Println("[QuestionHandler] Question:", form.Question)
 	log.Println("[QuestionHandler] Model:", form.Model)
 	log.Println("[QuestionHandler] UUID:", form.UUID)
@@ -37,49 +37,60 @@ func (ctx *HandlerContext) QuestionHandler(w http.ResponseWriter, r *http.Reques
 	clientToUse := ctx.openAIClient
 	if form.ApiKey != "" {
 		log.Println("[QuestionHandler] Using provided custom API key:", form.ApiKey)
-		clientToUse = openai.NewClient(form.ApiKey)
+		// openaiConfig := openai.DefaultConfig(form.ApiKey)
+		// openaiConfig.BaseURL = "http://94.74.89.252:7758/5g-openai/v1"
+		// clientToUse := openai.NewClientWithConfig(openaiConfig)
+		// clientToUse = openai.NewClient(form.ApiKey)
 	}
-
-	// step 1: Feed question to openai embeddings api to get an embedding back
-	questionEmbedding, err := getEmbedding(clientToUse, form.Question, openai.AdaEmbeddingV2)
-	if err != nil {
-		log.Println("[QuestionHandler ERR] OpenAI get embedding request error\n", err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	log.Println("[QuestionHandler] Question Embedding Length:", len(questionEmbedding))
-
-	// step 2: Query vector db using questionEmbedding to get context matches
-	matches, err := ctx.vectorDB.Retrieve(questionEmbedding, 4, form.UUID)
-	if err != nil {
-		log.Println("[QuestionHandler ERR] Vector DB query error\n", err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	log.Println("[QuestionHandler] Got matches from vector DB:", matches)
-
-	// Extract context text and titles from the matches
-	contexts := make([]Context, len(matches))
-	for i, match := range matches {
-		contexts[i].Text = match.Metadata["text"]
-		contexts[i].Title = match.Metadata["title"]
-	}
-	log.Println("[QuestionHandler] Retrieved context from vector DB:\n", contexts)
-
-	// step 3: Structure the prompt with a context section + question, using top x results from vector DB as the context
-	contextTexts := make([]string, len(contexts))
-	for i, context := range contexts {
-		contextTexts[i] = context.Text
-	}
-	prompt, err := buildPrompt(contextTexts, form.Question)
-	if prompt == "" {
+	prompt := ""
+	contexts := make([]Context, 0)
+	// 判断字符串是否以"//"开头
+	if strings.HasPrefix(form.Question, "//") {
+		// 去掉开头的"//"
+		form.Question = form.Question[2:]
 		prompt = form.Question
-	}
-	if err != nil {
-		log.Println("[QuestionHandler ERR] Error building prompt\n", err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	} else {
+		// step 1: Feed question to openai embeddings api to get an embedding back
+		questionEmbedding, err := getEmbedding(clientToUse, form.Question, openai.AdaEmbeddingV2)
+		if err != nil {
+			log.Println("[QuestionHandler ERR] OpenAI get embedding request error\n", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		log.Println("[QuestionHandler] Question Embedding Length:", len(questionEmbedding))
+
+		// step 2: Query vector db using questionEmbedding to get context matches
+		matches, err := ctx.vectorDB.Retrieve(questionEmbedding, 4, form.UUID)
+		if err != nil {
+			log.Println("[QuestionHandler ERR] Vector DB query error\n", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		log.Println("[QuestionHandler] Got matches from vector DB:", matches)
+
+		// Extract context text and titles from the matches
+		contexts := make([]Context, len(matches))
+		for i, match := range matches {
+			contexts[i].Text = match.Metadata["text"]
+			contexts[i].Title = match.Metadata["title"]
+		}
+		log.Println("[QuestionHandler] Retrieved context from vector DB:\n", contexts)
+
+		// step 3: Structure the prompt with a context section + question, using top x results from vector DB as the context
+		contextTexts := make([]string, len(contexts))
+		for i, context := range contexts {
+			contextTexts[i] = context.Text
+		}
+		prompt, err := buildPrompt(contextTexts, form.Question)
+		if prompt == "" {
+			prompt = form.Question + " 使用中文回答"
+		}
+		if err != nil {
+			log.Println("[QuestionHandler ERR] Error building prompt\n", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	model := openai.GPT3Dot5Turbo

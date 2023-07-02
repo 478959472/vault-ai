@@ -55,7 +55,11 @@ func main() {
 	if len(openaiApiKey) == 0 {
 		log.Fatalln("MISSING OPENAI API KEY ENV VARIABLE")
 	}
-	openaiClient := openai.NewClient(openaiApiKey)
+	// NewClientWithConfig
+	// openaiClient := openai.NewClient(openaiApiKey)
+	openaiConfig := openai.DefaultConfig(openaiApiKey)
+	openaiConfig.BaseURL = "http://94.74.89.252:7758/5g-openai/v1"
+	openaiClient := openai.NewClientWithConfig(openaiConfig)
 
 	var vectorDB vectordb.VectorDB
 	var err error
