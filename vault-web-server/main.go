@@ -1,9 +1,16 @@
 package main
 
 import (
+	"compress/gzip"
 	"flag"
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/pashpashpash/vault/serverutil"
+	"github.com/pashpashpash/vault/vectordb"
+	"github.com/pashpashpash/vault/vectordb/pinecone"
+	"github.com/pashpashpash/vault/vectordb/qdrant"
 	"html/template"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -13,20 +20,11 @@ import (
 	"strings"
 	"time"
 
-	"compress/gzip"
-	"io"
-
-	"github.com/pashpashpash/vault/serverutil"
-	"github.com/pashpashpash/vault/vectordb"
-	"github.com/pashpashpash/vault/vectordb/pinecone"
-	"github.com/pashpashpash/vault/vectordb/qdrant"
-
 	"github.com/pashpashpash/vault/vault-web-server/postapi"
 
 	openai "github.com/sashabaranov/go-openai"
 
 	"github.com/codegangsta/negroni"
-	"github.com/gorilla/mux"
 )
 
 const (
@@ -39,19 +37,29 @@ var (
 	debugSite = flag.Bool(
 		"debug", false, "debug site")
 	port = flag.String(
-		"port", "8100", "server port")
+		"port", "8101", "server port")
 	siteConfig = map[string]string{
 		"DEBUG_SITE": "false",
 	}
 )
 
 func main() {
+	args := os.Args
+	if len(args) < 4 {
+		fmt.Println("参数有误，参数数量应为三个，分别为 openaiApiKey PINECONE_API_KEY PINECONE_API_ENDPOINT")
+	} else {
+		fmt.Printf("参数1：%s\n参数2：%s\n参数3：%s\n", args[1], args[2], args[3])
+		return
+	}
 	// Parse command line flags + override defaults
 	flag.Parse()
 	siteConfig["DEBUG_SITE"] = strconv.FormatBool(*debugSite)
 	rand.Seed(time.Now().UnixNano())
 
 	openaiApiKey := os.Getenv("OPENAI_API_KEY")
+	if openaiApiKey == "" {
+		openaiApiKey = args[1]
+	}
 	if len(openaiApiKey) == 0 {
 		log.Fatalln("MISSING OPENAI API KEY ENV VARIABLE")
 	}
@@ -65,6 +73,7 @@ func main() {
 	var err error
 
 	qdrantApiEndpoint := os.Getenv("QDRANT_API_ENDPOINT")
+
 	if len(qdrantApiEndpoint) != 0 {
 		vectorDB, err = qdrant.New(qdrantApiEndpoint)
 		if err != nil {
@@ -73,8 +82,14 @@ func main() {
 	}
 
 	pineconeApiEndpoint := os.Getenv("PINECONE_API_ENDPOINT")
+	if pineconeApiEndpoint == "" {
+		pineconeApiEndpoint = args[3]
+	}
 	if len(pineconeApiEndpoint) != 0 {
 		pineconeApiKey := os.Getenv("PINECONE_API_KEY")
+		if pineconeApiKey == "" {
+			pineconeApiKey = args[2]
+		}
 		if len(pineconeApiKey) == 0 {
 			log.Fatalln("MISSING PINECONE API KEY ENV VARIABLE")
 		}
@@ -136,7 +151,7 @@ func ServeIndex(w http.ResponseWriter, r *http.Request, meta serverutil.SiteConf
 	}
 
 	//set the host Manually when on local host
-	if r.Host == "localhost:8100" {
+	if r.Host == "localhost:8101" {
 		currentHost = "vault.pash.city"
 		currentSite = "vault"
 

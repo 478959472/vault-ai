@@ -64,7 +64,7 @@ When setting up your pinecone index, use a vector size of `1536` and keep all th
 
     `npm install`
 
-2.  Run the golang webserver (default port `:8100`):
+2.  Run the golang webserver (default port `:8101`):
 
     `npm start`
 

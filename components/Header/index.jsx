@@ -10,7 +10,7 @@ const Header = (): React.Node => {
     let thisSite = curHost;
 
     if (curHost === 'localhost') {
-        thisSite = 'http://localhost:8100';
+        thisSite = 'http://localhost:8101';
     } else {
         thisSite = 'https://34.82.254.177/';
     }
