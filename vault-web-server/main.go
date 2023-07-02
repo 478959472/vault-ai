@@ -47,9 +47,9 @@ func main() {
 	args := os.Args
 	if len(args) < 4 {
 		fmt.Println("参数有误，参数数量应为三个，分别为 openaiApiKey PINECONE_API_KEY PINECONE_API_ENDPOINT")
+		//return
 	} else {
 		fmt.Printf("参数1：%s\n参数2：%s\n参数3：%s\n", args[1], args[2], args[3])
-		return
 	}
 	// Parse command line flags + override defaults
 	flag.Parse()
@@ -67,6 +67,7 @@ func main() {
 	// openaiClient := openai.NewClient(openaiApiKey)
 	openaiConfig := openai.DefaultConfig(openaiApiKey)
 	openaiConfig.BaseURL = "http://94.74.89.252:7758/5g-openai/v1"
+	//openaiConfig.BaseURL = "https://api.openai.com/v1"
 	openaiClient := openai.NewClientWithConfig(openaiConfig)
 
 	var vectorDB vectordb.VectorDB

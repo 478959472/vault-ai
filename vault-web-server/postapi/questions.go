@@ -42,13 +42,13 @@ func (ctx *HandlerContext) QuestionHandler(w http.ResponseWriter, r *http.Reques
 		// clientToUse := openai.NewClientWithConfig(openaiConfig)
 		// clientToUse = openai.NewClient(form.ApiKey)
 	}
-	prompt := ""
+	promptMake := ""
 	contexts := make([]Context, 0)
 	// 判断字符串是否以"//"开头
 	if strings.HasPrefix(form.Question, "//") {
 		// 去掉开头的"//"
 		form.Question = form.Question[2:]
-		prompt = form.Question
+		promptMake = form.Question
 	} else {
 		// step 1: Feed question to openai embeddings api to get an embedding back
 		questionEmbedding, err := getEmbedding(clientToUse, form.Question, openai.AdaEmbeddingV2)
@@ -86,6 +86,7 @@ func (ctx *HandlerContext) QuestionHandler(w http.ResponseWriter, r *http.Reques
 		if prompt == "" {
 			prompt = form.Question + " 使用中文回答"
 		}
+		promptMake = prompt
 		if err != nil {
 			log.Println("[QuestionHandler ERR] Error building prompt\n", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -98,8 +99,8 @@ func (ctx *HandlerContext) QuestionHandler(w http.ResponseWriter, r *http.Reques
 		model = openai.GPT3TextDavinci003
 	}
 
-	log.Printf("[QuestionHandler] Sending OpenAI api request...\nPrompt:%s\n", prompt)
-	openAIResponse, tokens, err := callOpenAI(clientToUse, prompt, model,
+	log.Printf("[QuestionHandler] Sending OpenAI api request...\nPrompt:%s\n", promptMake)
+	openAIResponse, tokens, err := callOpenAI(clientToUse, promptMake, model,
 		"You are a helpful assistant answering questions based on the context provided.",
 		512)
 
