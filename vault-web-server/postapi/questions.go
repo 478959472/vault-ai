@@ -43,7 +43,7 @@ func (ctx *HandlerContext) QuestionHandler(w http.ResponseWriter, r *http.Reques
 		// clientToUse = openai.NewClient(form.ApiKey)
 	}
 	promptMake := ""
-	contexts := make([]Context, 0)
+	contextAll := make([]Context, 0)
 	// 判断字符串是否以"//"开头
 	if strings.HasPrefix(form.Question, "//") {
 		// 去掉开头的"//"
@@ -87,6 +87,7 @@ func (ctx *HandlerContext) QuestionHandler(w http.ResponseWriter, r *http.Reques
 			prompt = form.Question + " 使用中文回答"
 		}
 		promptMake = prompt
+		contextAll = contexts
 		if err != nil {
 			log.Println("[QuestionHandler ERR] Error building prompt\n", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -113,7 +114,7 @@ func (ctx *HandlerContext) QuestionHandler(w http.ResponseWriter, r *http.Reques
 	log.Println("[QuestionHandler] OpenAI response:\n", openAIResponse)
 	response := OpenAIResponse{openAIResponse, tokens}
 
-	answer := Answer{response.Response, contexts, response.Tokens}
+	answer := Answer{response.Response, contextAll, response.Tokens}
 	jsonResponse, err := json.Marshal(answer)
 	if err != nil {
 		log.Println("[QuestionHandler ERR] OpenAI response marshalling error", err)
