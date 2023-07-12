@@ -123,9 +123,9 @@ func (q *Qdrant) CreateNamespace(uuid string) error {
 }
 
 func (q *Qdrant) UpsertEmbeddings(embeddings [][]float32, chunks []chunk.Chunk, uuid string) error {
-	if err := q.CreateNamespace(uuid); err != nil {
-		return err
-	}
+	// if err := q.CreateNamespace(uuid); err != nil {
+	// 	return err
+	// }
 
 	points := make([]Point, len(embeddings))
 
@@ -154,7 +154,8 @@ func (q *Qdrant) UpsertEmbeddings(embeddings [][]float32, chunks []chunk.Chunk, 
 			return err
 		}
 
-		req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/collections/%s/points", q.Endpoint, uuid), bytes.NewBuffer(jsonData))
+		url := fmt.Sprintf("%s/collections/%s/points", q.Endpoint, uuid)
+		req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(jsonData))
 		if err != nil {
 			return err
 		}
@@ -205,9 +206,9 @@ func (q *Qdrant) Retrieve(questionEmbedding []float32, topK int, uuid string) ([
 
 	var searchResult SearchResult
 	err = json.NewDecoder(resp.Body).Decode(&searchResult)
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// Convert qdrantMatch to QueryMatch
 	queryMatches := make([]vectordb.QueryMatch, len(searchResult.Result))

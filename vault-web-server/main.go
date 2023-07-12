@@ -67,8 +67,8 @@ func main() {
 	// NewClientWithConfig
 	// openaiClient := openai.NewClient(openaiApiKey)
 	openaiConfig := openai.DefaultConfig(openaiApiKey)
-	// openaiConfig.BaseURL = "http://94.74.89.252:7758/5g-openai/v1"
-	openaiConfig.BaseURL = "https://api.openai-proxy.com/v1"
+	openaiConfig.BaseURL = "http://94.74.89.252:7758/5g-openai/v1"
+	// openaiConfig.BaseURL = "https://api.openai-proxy.com/v1"
 	openaiClient := openai.NewClientWithConfig(openaiConfig)
 
 	log.Println("[main ] openaiConfig.BaseURLt\n", openaiConfig.BaseURL)
