@@ -4,11 +4,6 @@ import (
 	"compress/gzip"
 	"flag"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/pashpashpash/vault/serverutil"
-	"github.com/pashpashpash/vault/vectordb"
-	"github.com/pashpashpash/vault/vectordb/pinecone"
-	"github.com/pashpashpash/vault/vectordb/qdrant"
 	"html/template"
 	"io"
 	"log"
@@ -19,6 +14,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/pashpashpash/vault/serverutil"
+	"github.com/pashpashpash/vault/vectordb"
+	"github.com/pashpashpash/vault/vectordb/pinecone"
+	"github.com/pashpashpash/vault/vectordb/qdrant"
 
 	"github.com/pashpashpash/vault/vault-web-server/postapi"
 
@@ -46,19 +47,19 @@ var (
 func main() {
 	args := os.Args
 	if len(args) < 4 {
-		fmt.Println("参数有误，参数数量应为三个，分别为 openaiApiKey PINECONE_API_KEY PINECONE_API_ENDPOINT")
+		fmt.Println("参数有误，参数数量应为三个，分别为 dbType[qdrant,pinecone] openaiApiKey PINECONE_API_KEY PINECONE_API_ENDPOINT QDRANT_API_ENDPOINT")
 		//return
 	} else {
-		fmt.Printf("参数1：%s\n参数2：%s\n参数3：%s\n", args[1], args[2], args[3])
+		fmt.Printf("参数1：%s\n参数2：%s\n参数3：%s\n参数3：%s\n参数3：%s\n ", args[1], args[2], args[3], args[4], args[5])
 	}
 	// Parse command line flags + override defaults
 	flag.Parse()
 	siteConfig["DEBUG_SITE"] = strconv.FormatBool(*debugSite)
 	rand.Seed(time.Now().UnixNano())
-
+	dbType := args[1]
 	openaiApiKey := os.Getenv("OPENAI_API_KEY")
 	if openaiApiKey == "" {
-		openaiApiKey = args[1]
+		openaiApiKey = args[2]
 	}
 	if len(openaiApiKey) == 0 {
 		log.Fatalln("MISSING OPENAI API KEY ENV VARIABLE")
@@ -66,31 +67,26 @@ func main() {
 	// NewClientWithConfig
 	// openaiClient := openai.NewClient(openaiApiKey)
 	openaiConfig := openai.DefaultConfig(openaiApiKey)
-	openaiConfig.BaseURL = "http://94.74.89.252:7758/5g-openai/v1"
-	//openaiConfig.BaseURL = "https://api.openai.com/v1"
+	// openaiConfig.BaseURL = "http://94.74.89.252:7758/5g-openai/v1"
+	openaiConfig.BaseURL = "https://api.openai-proxy.com/v1"
 	openaiClient := openai.NewClientWithConfig(openaiConfig)
 
+	log.Println("[main ] openaiConfig.BaseURLt\n", openaiConfig.BaseURL)
 	var vectorDB vectordb.VectorDB
 	var err error
 
-	qdrantApiEndpoint := os.Getenv("QDRANT_API_ENDPOINT")
+	qdrantApiEndpoint := args[5] //os.Getenv("QDRANT_API_ENDPOINT")
 
-	if len(qdrantApiEndpoint) != 0 {
+	if len(qdrantApiEndpoint) != 0 && dbType == "qdrant" {
 		vectorDB, err = qdrant.New(qdrantApiEndpoint)
 		if err != nil {
 			log.Fatalln("ERROR INITIALIZING QDRANT:", err)
 		}
 	}
+	pineconeApiEndpoint := args[4]
 
-	pineconeApiEndpoint := os.Getenv("PINECONE_API_ENDPOINT")
-	if pineconeApiEndpoint == "" {
-		pineconeApiEndpoint = args[3]
-	}
-	if len(pineconeApiEndpoint) != 0 {
-		pineconeApiKey := os.Getenv("PINECONE_API_KEY")
-		if pineconeApiKey == "" {
-			pineconeApiKey = args[2]
-		}
+	if len(pineconeApiEndpoint) != 0 && dbType == "pinecone" {
+		pineconeApiKey := args[3]
 		if len(pineconeApiKey) == 0 {
 			log.Fatalln("MISSING PINECONE API KEY ENV VARIABLE")
 		}

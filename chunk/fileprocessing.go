@@ -2,23 +2,21 @@ package chunk
 
 import (
 	"bytes"
-	"log"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"mime/multipart"
 	"strings"
 
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/neurosnap/sentences/english"
 	tke "github.com/pkoukk/tiktoken-go"
-	"golang.org/x/text/transform"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/charmap"
-	"github.com/gabriel-vasile/mimetype"
-
+	"golang.org/x/text/transform"
 
 	"github.com/saintfish/chardet"
-
 
 	"io"
 
@@ -102,7 +100,6 @@ func CreateChunks(fileContent string, title string) ([]Chunk, error) {
 
 	return chunks, nil
 }
-
 
 func GetTextFromFile(f multipart.File) (string, error) {
 	content, err := ioutil.ReadAll(f)

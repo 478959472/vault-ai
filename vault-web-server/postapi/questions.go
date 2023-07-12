@@ -83,6 +83,7 @@ func (ctx *HandlerContext) QuestionHandler(w http.ResponseWriter, r *http.Reques
 			contextTexts[i] = context.Text
 		}
 		prompt, err := buildPrompt(contextTexts, form.Question)
+		log.Println("[QuestionHandler] buildPrompt:\n", prompt)
 		if prompt == "" {
 			prompt = form.Question + " 使用中文回答"
 		}

@@ -1,0 +1,3 @@
+### GET request with a header
+GET http://192.169.7.174:6333/collections/8078d199-aac0-452d-8487-698fc10d3c84
+Accept: application/json
