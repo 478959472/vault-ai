@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pashpashpash/vault/chunk"
 	"github.com/pashpashpash/vault/vectordb"
 	cache "github.com/patrickmn/go-cache"
@@ -24,13 +25,13 @@ type Qdrant struct {
 }
 
 type Point struct {
-	ID      int               `json:"id"`
+	ID      string            `json:"id"`
 	Vector  []float32         `json:"vector"`
 	Payload map[string]string `json:"payload,omitempty"`
 }
 
 type Match struct {
-	ID      int               `json:"id"`
+	ID      string            `json:"id"`
 	Score   float32           `json:"score"`
 	Payload map[string]string `json:"payload"`
 	Version int               `json:"version"`
@@ -122,7 +123,7 @@ func (q *Qdrant) CreateNamespace(uuid string) error {
 	return nil
 }
 
-func (q *Qdrant) UpsertEmbeddings(embeddings [][]float32, chunks []chunk.Chunk, uuid string) error {
+func (q *Qdrant) UpsertEmbeddings(embeddings [][]float32, chunks []chunk.Chunk, uuidNameSpace string) error {
 	// if err := q.CreateNamespace(uuid); err != nil {
 	// 	return err
 	// }
@@ -130,7 +131,9 @@ func (q *Qdrant) UpsertEmbeddings(embeddings [][]float32, chunks []chunk.Chunk, 
 	points := make([]Point, len(embeddings))
 
 	for i, embedding := range embeddings {
-		points[i].ID = i
+		// 生成一个新的 UUID
+		newUUID := uuid.New()
+		points[i].ID = newUUID.String()
 		points[i].Vector = embedding
 		if i < len(chunks) {
 			points[i].Payload = map[string]string{
@@ -154,7 +157,7 @@ func (q *Qdrant) UpsertEmbeddings(embeddings [][]float32, chunks []chunk.Chunk, 
 			return err
 		}
 
-		url := fmt.Sprintf("%s/collections/%s/points", q.Endpoint, uuid)
+		url := fmt.Sprintf("%s/collections/%s/points", q.Endpoint, uuidNameSpace)
 		req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(jsonData))
 		if err != nil {
 			return err
@@ -213,7 +216,7 @@ func (q *Qdrant) Retrieve(questionEmbedding []float32, topK int, uuid string) ([
 	// Convert qdrantMatch to QueryMatch
 	queryMatches := make([]vectordb.QueryMatch, len(searchResult.Result))
 	for i, result := range searchResult.Result {
-		queryMatches[i].ID = fmt.Sprintf("%d", result.ID)
+		queryMatches[i].ID = result.ID
 		queryMatches[i].Score = result.Score
 		queryMatches[i].Metadata = result.Payload
 	}

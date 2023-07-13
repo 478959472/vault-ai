@@ -2,3 +2,51 @@
 GET http://10.10.215.109:6333/collections/8078d199-aac0-452d-8487-698fc10d3c84
 Accept: application/json
 
+
+### 创建收藏
+PUT http://192.169.7.174:6333/collections/gpt_collection
+Content-Type: application/json
+
+{
+  "vectors": {
+    "size": 4,
+    "distance": "Dot"
+  }
+}
+###
+GET http://192.169.7.174:6333/collections/8078d199-aac0-452d-8487-698fc10d3c84
+Accept: application/json
+
+### 添加积分
+PUT http://192.169.7.174:6333/collections/test_collection/points?wait=true
+Content-Type: application/json
+
+{
+        "points": [
+          {"id": 1, "vector": [0.05, 0.61, 0.76, 0.74], "payload": {"city": "Berlin"}},
+          {"id": 2, "vector": [0.19, 0.81, 0.75, 0.11], "payload": {"city": ["Berlin", "London"] }},
+          {"id": 3, "vector": [0.36, 0.55, 0.47, 0.94], "payload": {"city": ["Berlin", "Moscow"] }},
+          {"id": 4, "vector": [0.18, 0.01, 0.85, 0.80], "payload": {"city": ["London", "Moscow"] }},
+          {"id": 5, "vector": [0.24, 0.18, 0.22, 0.44], "payload": {"count": [0] }},
+          {"id": 6, "vector": [0.35, 0.08, 0.11, 0.44]}
+        ]
+}
+
+### 过滤搜索
+POST http://192.169.7.174:6333/collections/test_collection/points/search
+Content-Type: application/json
+
+{
+      "filter": {
+          "should": [
+              {
+                  "key": "city",
+                  "match": {
+                      "value": "London"
+                  }
+              }
+          ]
+      },
+        "vector": [0.2,0.1,0.9,0.7],
+        "top": 3
+}

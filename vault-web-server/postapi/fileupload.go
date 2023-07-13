@@ -18,7 +18,7 @@ type UploadResponse struct {
 	FailedFileNames     map[string]string `json:"failed_file_names"`
 }
 
-const MAX_FILE_SIZE int64 = 25 << 20         // 3 MB
+const MAX_FILE_SIZE int64 = 45 << 20         // 3 MB
 const MAX_TOTAL_UPLOAD_SIZE int64 = 50 << 20 // 3 MB
 
 func (ctx *HandlerContext) UploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +41,7 @@ func (ctx *HandlerContext) UploadHandler(w http.ResponseWriter, r *http.Request)
 
 	files := r.MultipartForm.File["files"]
 	// uuid := r.FormValue("uuid") // Get the UUID from the form data
-	uuid := "8078d199-aac0-452d-8487-698fc10d3c84"
+	uuid := "8078d199-aac0-452d-8487-698fc10d3c86"
 	userProvidedOpenApiKey := r.FormValue("apikey")
 
 	log.Println("[UploadHandler] UUID=", uuid)
