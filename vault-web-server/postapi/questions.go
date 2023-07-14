@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/pashpashpash/vault/form"
+	"github.com/pashpashpash/vault/vectordb"
 	openai "github.com/sashabaranov/go-openai"
 )
 
@@ -44,6 +45,7 @@ func (ctx *HandlerContext) QuestionHandler(w http.ResponseWriter, r *http.Reques
 	}
 	promptMake := ""
 	contextAll := make([]Context, 0)
+	matchList := []float32{}
 	// 判断字符串是否以"//"开头
 	if strings.HasPrefix(form.Question, "//") {
 		// 去掉开头的"//"
@@ -68,10 +70,16 @@ func (ctx *HandlerContext) QuestionHandler(w http.ResponseWriter, r *http.Reques
 		}
 
 		log.Println("[QuestionHandler] Got matches from vector DB:", matches)
-
+		var filteredMatches []vectordb.QueryMatch
+		for _, match := range matches {
+			matchList = append(matchList, match.Score)
+			if match.Score > 0.8 {
+				filteredMatches = append(filteredMatches, match)
+			}
+		}
 		// Extract context text and titles from the matches
-		contexts := make([]Context, len(matches))
-		for i, match := range matches {
+		contexts := make([]Context, len(filteredMatches))
+		for i, match := range filteredMatches {
 			contexts[i].Text = match.Metadata["text"]
 			contexts[i].Title = match.Metadata["title"]
 		}
@@ -114,6 +122,8 @@ func (ctx *HandlerContext) QuestionHandler(w http.ResponseWriter, r *http.Reques
 
 	log.Println("[QuestionHandler] OpenAI response:\n", openAIResponse)
 	response := OpenAIResponse{openAIResponse, tokens}
+
+	log.Println("[QuestionHandler] Query vector from vector DB matchList\n", matchList)
 
 	answer := Answer{response.Response, contextAll, response.Tokens}
 	jsonResponse, err := json.Marshal(answer)
